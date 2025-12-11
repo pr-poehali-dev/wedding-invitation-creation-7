@@ -4,6 +4,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import Dict, Any
+import psycopg2
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
@@ -105,7 +106,32 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     
     msg.attach(MIMEText(email_body, 'html', 'utf-8'))
     
+    database_url = os.environ.get('DATABASE_URL')
+    
     try:
+        if database_url:
+            conn = psycopg2.connect(database_url)
+            cur = conn.cursor()
+            
+            drinks_str = ', '.join(body_data.get('drinks', [])) if body_data.get('drinks') else None
+            
+            cur.execute(
+                "INSERT INTO guests (name, message, will_attend, transfer, food_preference, drinks, has_kids) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                (
+                    body_data.get('name'),
+                    body_data.get('message'),
+                    body_data.get('willAttend', True),
+                    body_data.get('transfer'),
+                    body_data.get('foodPreference'),
+                    drinks_str,
+                    body_data.get('hasKids', False)
+                )
+            )
+            conn.commit()
+            cur.close()
+            conn.close()
+        
         with smtplib.SMTP(smtp_host, smtp_port) as server:
             server.starttls()
             server.login(smtp_user, smtp_password)
@@ -117,7 +143,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            'body': json.dumps({'success': True, 'message': 'Email sent successfully'}),
+            'body': json.dumps({'success': True, 'message': 'Guest saved and email sent successfully'}),
             'isBase64Encoded': False
         }
     except Exception as e:
@@ -127,6 +153,6 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            'body': json.dumps({'error': f'Failed to send email: {str(e)}'}),
+            'body': json.dumps({'error': f'Failed to process: {str(e)}'}),
             'isBase64Encoded': False
         }
