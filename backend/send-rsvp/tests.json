@@ -1,0 +1,29 @@
+{
+  "tests": [
+    {
+      "name": "Test RSVP submission",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "name": "Иван Иванов",
+        "message": "С удовольствием приду на вашу свадьбу!",
+        "willAttend": true,
+        "transfer": "yes",
+        "foodPreference": "vegetarian",
+        "drinks": ["wine", "champagne"],
+        "hasKids": false
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Test OPTIONS request",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    }
+  ]
+}

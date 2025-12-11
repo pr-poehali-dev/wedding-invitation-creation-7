@@ -42,13 +42,38 @@ const Index = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Спасибо за подтверждение! 💕",
-      description: "Мы получили ваш ответ и очень ждем встречи!"
-    });
-    setShowForm(false);
+    
+    try {
+      const response = await fetch('https://functions.poehali.dev/6104a888-245b-43b7-a2a7-880e754d1d4b', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Спасибо за подтверждение! 💕",
+          description: "Мы получили ваш ответ и очень ждем встречи!"
+        });
+        setShowForm(false);
+      } else {
+        toast({
+          title: "Ошибка отправки",
+          description: "Попробуйте еще раз или свяжитесь с нами напрямую",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Ошибка отправки",
+        description: "Попробуйте еще раз или свяжитесь с нами напрямую",
+        variant: "destructive"
+      });
+    }
   };
 
   const schedule = [
